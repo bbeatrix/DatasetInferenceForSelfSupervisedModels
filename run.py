@@ -14,7 +14,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='PyTorch SimCLR')
 parser.add_argument('-data', metavar='DIR',
-                    default=f"/ssd003/home/{os.getenv('USER')}/data",
+                    default=f"./out",
                     help='path to dataset')
 parser.add_argument('--dataset', default='cifar10',
                     help='dataset name',
@@ -24,7 +24,7 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet34',
                     help='model architecture: ' +
                          ' | '.join(model_names) +
                          ' (default: resnet50)')
-parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochs', default=200, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -48,7 +48,7 @@ parser.add_argument('--out_dim', default=128, type=int,
                     help='feature dimension (default: 128). This is the dimension of z = g(h).')
 parser.add_argument('--log-every-n-steps', default=200, type=int,
                     help='Log every n steps')
-parser.add_argument('--temperature', default=0.07, type=float,
+parser.add_argument('--temperature', default=0.2, type=float,
                     help='softmax temperature (default: 0.07)')
 parser.add_argument('--temperaturesn', default=100, type=float,
                     help='temperature for soft nearest neighbors loss')
