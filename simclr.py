@@ -33,7 +33,7 @@ class SimCLR(object):
         except:
             self.retrain = False
         self.log_dir = 'runs/' + logdir
-        self.pathpre = f"/scratch/ssd004/scratch/{os.getenv('USER')}/checkpoint"
+        self.pathpre = f"./out/checkpoint"
         if stealing:
             self.log_dir2 = f"{self.pathpre}/SimCLR/{self.args.epochs}{self.args.archstolen}{self.args.losstype}STEAL/"  # save logs here.
         else:
@@ -171,7 +171,7 @@ class SimCLR(object):
 
         logging.info("Training has finished.")
         # save model checkpoints
-        checkpoint_name = f'{self.args.dataset}_checkpoint_{self.args.epochs}_{self.args.losstype}.pth.tar'
+        checkpoint_name = f'{self.args.dataset}_checkpoint_{self.args.epochs}_{self.args.losstype}_temp{self.args.temperature}.pth.tar'
         if self.retrain:
             checkpoint_name = f'retrain{self.args.dataset}_checkpoint_{self.args.epochs}_{self.args.losstype}_{self.args.samples}.pth.tar'
         save_checkpoint({
