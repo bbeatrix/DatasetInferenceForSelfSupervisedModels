@@ -37,7 +37,7 @@ parser.add_argument('--num_queries', default=9000, type=int, metavar='N',
                     help='Number of queries to steal the model.')
 parser.add_argument('--lr', default=1e-4, type=float, # maybe try other lrs
                     help='learning rate to train the model with.')
-parser.add_argument('--modeltype', default='stolen', type=str,
+parser.add_argument('--modeltype', default='victim', type=str,
                     help='Type of model to evaluate', choices=['victim', 'stolen', 'random'])
 parser.add_argument('--save', default='False', type=str,
                     help='Save final model', choices=['True', 'False'])
@@ -72,9 +72,11 @@ if args.retrain:
     else:
         num_samples = [5000, 10000, 20000, 50000]
         samples = num_samples[args.array_id]
+if args.losstype == "infonce":
+    args.temperature = 0.2
 
-pathpre = f"/scratch/ssd004/scratch/{os.getenv('USER')}/checkpoint"
-datapath = f"/ssd003/home/{os.getenv('USER')}/data"
+pathpre = f"./out/checkpoint"
+datapath = f"./out"
 
 def load_victim(epochs, dataset, model, loss, device, retrain=False):
 
@@ -85,9 +87,14 @@ def load_victim(epochs, dataset, model, loss, device, retrain=False):
         checkpoint = torch.load(
         f"{pathpre}/SimCLR/102resnet34infonceSTEAL/retrain{dataset}_checkpoint_{epochs}_{loss}_{samples}.pth.tar", map_location=device)
     else:
-        checkpoint = torch.load(
-            f"{pathpre}/SimCLR/{epochs}{args.arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}.pth.tar",
-            map_location=device)
+        if loss == "infonce":
+            checkpoint = torch.load(
+                f"{pathpre}/SimCLR/{epochs}{args.arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}_temp{args.temperature}.pth.tar",
+                map_location=device)
+        else:
+            checkpoint = torch.load(
+                f"{pathpre}/SimCLR/{epochs}{args.arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}.pth.tar",
+                map_location=device)
     try:
         state_dict = checkpoint['state_dict']
     except:
