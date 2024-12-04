@@ -16,7 +16,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='PyTorch SimCLR')
 parser.add_argument('-data', metavar='DIR',
-                    default=f"/ssd003/home/{os.getenv('USER')}/data",
+                    default=f"./out",
                     help='path to dataset')
 parser.add_argument('--dataset', default='cifar10',
                     help='dataset name',
@@ -34,7 +34,7 @@ parser.add_argument('--archstolen', default='resnet34',
                     help='stolen model architecture: ' +
                          ' | '.join(model_names) +
                          ' (default: resnet34)')
-parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochstrain', default=200, type=int, metavar='N',
                     help='number of epochs victim was trained with')
@@ -92,7 +92,7 @@ parser.add_argument('--force', default='False', type=str,
                     help='Use cifar10 training set when stealing from cifar10 victim model.',
                     choices=['True', 'False'])
 
-pathpre = f"/scratch/ssd004/scratch/{os.getenv('USER')}/checkpoint"
+pathpre = f"./out/checkpoint"
 
 
 def main():
