@@ -39,9 +39,15 @@ def accuracy(output, target, topk=(1,)):
 
 
 def load_victim(epochs, dataset, model, arch, loss, device, pathpre, discard_mlp=False):
-    checkpoint = torch.load(
-        f"{pathpre}/SimCLR/{epochs}{arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}.pth.tar",
-        map_location=device)
+    if loss == "infonce":
+        temperature = 0.2
+        checkpoint = torch.load(
+            f"{pathpre}/SimCLR/{epochs}{arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}_temp{temperature}.pth.tar",
+            map_location=device)
+    else:
+        checkpoint = torch.load(
+            f"{pathpre}/SimCLR/{epochs}{arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}.pth.tar",
+            map_location=device)
     try:
         state_dict = checkpoint['state_dict']
     except:
