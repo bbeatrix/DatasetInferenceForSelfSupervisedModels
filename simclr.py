@@ -167,7 +167,7 @@ class SimCLR(object):
             if epoch_counter >= 10:
                 self.scheduler.step()
             logging.debug(
-                f"Epoch: {epoch_counter}\tLoss: {loss}\t")
+                f"Epoch: {epoch_counter}\tLoss: {loss}\t Lr: {self.optimizer.param_groups[0]['lr']}")
 
         logging.info("Training has finished.")
         # save model checkpoints
@@ -285,7 +285,7 @@ class SimCLR(object):
                 self.scheduler.step()
 
             logging.debug(
-                f"Epoch: {epoch_counter}\tLoss: {loss}\t")
+                f"Epoch: {epoch_counter}\tLoss: {loss}\t Lr: {self.optimizer.param_groups[0]['lr']}")
 
         logging.info("Stealing has finished.")
         # save model checkpoints
