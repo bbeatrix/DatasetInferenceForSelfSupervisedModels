@@ -39,7 +39,7 @@ parser.add_argument('--lr', default=1e-4, type=float, # maybe try other lrs
                     help='learning rate to train the model with.')
 parser.add_argument('--modeltype', default='victim', type=str,
                     help='Type of model to evaluate', choices=['victim', 'stolen', 'random'])
-parser.add_argument('--save', default='False', type=str,
+parser.add_argument('--save', default='True', type=str,
                     help='Save final model', choices=['True', 'False'])
 parser.add_argument('--losstype', default='infonce', type=str,
                     help='Loss function to use.')
