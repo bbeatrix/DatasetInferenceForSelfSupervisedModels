@@ -16,7 +16,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='PyTorch SimCLR')
 parser.add_argument('-data', metavar='DIR',
-                    default=f"/ssd003/home/{os.getenv('USER')}/data",
+                    default=f"./out",
                     help='path to dataset')
 parser.add_argument('--dataset', default='cifar10',
                     help='dataset name',
@@ -34,7 +34,7 @@ parser.add_argument('--archstolen', default='resnet34',
                     help='stolen model architecture: ' +
                          ' | '.join(model_names) +
                          ' (default: resnet34)')
-parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochstrain', default=200, type=int, metavar='N',
                     help='number of epochs victim was trained with')
@@ -61,11 +61,13 @@ parser.add_argument('--out_dim', default=128, type=int,
                     help='feature dimension (default: 128)')
 parser.add_argument('--log-every-n-steps', default=200, type=int,
                     help='Log every n steps')
-parser.add_argument('--temperature', default=0.07, type=float,
+parser.add_argument('--temperature', default=0.1, type=float,
                     help='softmax temperature (default: 0.07)')
+parser.add_argument('--tempvictim', default=0.2, type=float,
+                    help='softmax temperature of the victim')
 parser.add_argument('--temperaturesn', default=100, type=float,
                     help='temperature for soft nearest neighbors loss')
-parser.add_argument('--num_queries', default=9000, type=int, metavar='N',
+parser.add_argument('--num_queries', default=10000, type=int, metavar='N',
                     help='Number of queries to steal the model.')
 parser.add_argument('--n-views', default=1, type=int, metavar='N',
                     help='Number of views for contrastive learning training.')
@@ -92,7 +94,7 @@ parser.add_argument('--force', default='False', type=str,
                     help='Use cifar10 training set when stealing from cifar10 victim model.',
                     choices=['True', 'False'])
 
-pathpre = f"/scratch/ssd004/scratch/{os.getenv('USER')}/checkpoint"
+pathpre = f"./out/checkpoint"
 
 
 def main():
@@ -110,7 +112,7 @@ def main():
         args.weight_decay = 1e-4
         # args.n_views = 2
     if args.losstype == "infonce":
-        args.lr = 0.0003
+        args.lr = 0.0015
     if args.losstype == "supcon":
         args.lr = 0.05
     if args.losstype == "softnn":
@@ -161,7 +163,7 @@ def main():
                                       loss=args.lossvictim,
                                       include_mlp=False).to(args.device)
         victim_model = load_victim(args.epochstrain, args.dataset, victim_model,
-                                   args.arch, args.lossvictim,
+                                   args.arch, args.lossvictim, args.tempvictim,
                                    device=args.device, discard_mlp=True,
                                    pathpre=pathpre)
     else:
@@ -170,7 +172,7 @@ def main():
                                       loss=args.lossvictim,
                                       include_mlp=True).to(args.device)
         victim_model = load_victim(args.epochstrain, args.dataset, victim_model,
-                                   args.arch, args.lossvictim,
+                                   args.arch, args.lossvictim, args.tempvictim,
                                    device=args.device, pathpre=pathpre)
 
     if args.stolenhead == "False":
@@ -192,8 +194,7 @@ def main():
                                     momentum=args.momentum,
                                     weight_decay=args.weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(
-        query_loader), eta_min=0, last_epoch=-1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=0, last_epoch=-1)
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
     with torch.cuda.device(args.gpu_index):
         simclr = SimCLR(stealing=True, victim_model=victim_model,

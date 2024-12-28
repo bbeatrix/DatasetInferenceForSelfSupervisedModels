@@ -38,9 +38,9 @@ def accuracy(output, target, topk=(1,)):
         return res
 
 
-def load_victim(epochs, dataset, model, arch, loss, device, pathpre, discard_mlp=False):
+def load_victim(epochs, dataset, model, arch, loss, tempvictim, device, pathpre, discard_mlp=False):
     checkpoint = torch.load(
-        f"{pathpre}/SimCLR/{epochs}{arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}.pth.tar",
+        f"{pathpre}/SimCLR/{epochs}{arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}_temp{tempvictim}.pth.tar",
         map_location=device)
     try:
         state_dict = checkpoint['state_dict']

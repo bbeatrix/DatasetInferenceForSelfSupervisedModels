@@ -12,6 +12,8 @@ import torchvision.transforms as transforms
 import logging
 from torchvision import datasets
 
+import customsvhn
+
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print("Using device:", device)
@@ -23,7 +25,7 @@ parser.add_argument('--dataset', default='cifar10',
                     help='dataset name', choices=['stl10', 'cifar10', 'svhn', 'imagenet', 'cifar100'])
 parser.add_argument('--dataset-test', default='cifar10',
                     help='dataset to run downstream task on', choices=['stl10', 'cifar10', 'svhn'])
-parser.add_argument('--datasetsteal', default='cifar10',
+parser.add_argument('--datasetsteal', default='svhn',
                     help='dataset used for querying the victim', choices=['stl10', 'cifar10', 'svhn', 'imagenet', 'tinyimages'])
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet34',
         choices=['resnet18', 'resnet34', 'resnet50'], help='model architecture')
@@ -33,11 +35,11 @@ parser.add_argument('--epochstrain', default=200, type=int, metavar='N',
                     help='number of epochs victim was trained with')
 parser.add_argument('--epochs', default=100, type=int, metavar='N',
                     help='number of epochs stolen model was trained with')
-parser.add_argument('--num_queries', default=9000, type=int, metavar='N',
+parser.add_argument('--num_queries', default=10000, type=int, metavar='N',
                     help='Number of queries to steal the model.')
 parser.add_argument('--lr', default=1e-4, type=float, # maybe try other lrs
                     help='learning rate to train the model with.')
-parser.add_argument('--modeltype', default='stolen', type=str,
+parser.add_argument('--modeltype', default='victim', type=str,
                     help='Type of model to evaluate', choices=['victim', 'stolen', 'random'])
 parser.add_argument('--save', default='False', type=str,
                     help='Save final model', choices=['True', 'False'])
@@ -61,6 +63,8 @@ parser.add_argument('--retrain', action='store_true',
 parser.add_argument('--array_id', type=int, default=0, help='slurm array id.')
 parser.add_argument('--changeepochs', action='store_true',
                     help='use to adjust epochs based on array id instead of queries.')
+parser.add_argument('--temperature', default=0.2, type=float,
+                    help='infoNCE temperature during training.')
 
 args = parser.parse_args()
 if args.retrain:
@@ -73,8 +77,8 @@ if args.retrain:
         num_samples = [5000, 10000, 20000, 50000]
         samples = num_samples[args.array_id]
 
-pathpre = f"/scratch/ssd004/scratch/{os.getenv('USER')}/checkpoint"
-datapath = f"/ssd003/home/{os.getenv('USER')}/data"
+pathpre = f"./out/checkpoint"
+datapath = f"./out"
 
 def load_victim(epochs, dataset, model, loss, device, retrain=False):
 
@@ -85,9 +89,14 @@ def load_victim(epochs, dataset, model, loss, device, retrain=False):
         checkpoint = torch.load(
         f"{pathpre}/SimCLR/102resnet34infonceSTEAL/retrain{dataset}_checkpoint_{epochs}_{loss}_{samples}.pth.tar", map_location=device)
     else:
-        checkpoint = torch.load(
-            f"{pathpre}/SimCLR/{epochs}{args.arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}.pth.tar",
-            map_location=device)
+        if loss == "infonce":
+            checkpoint = torch.load(
+                f"{pathpre}/SimCLR/{epochs}{args.arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}_temp{args.temperature}.pth.tar",
+                map_location=device)
+        else:
+            checkpoint = torch.load(
+                f"{pathpre}/SimCLR/{epochs}{args.arch}{loss}TRAIN/{dataset}_checkpoint_{epochs}_{loss}.pth.tar",
+                map_location=device)
     try:
         state_dict = checkpoint['state_dict']
     except:
@@ -223,11 +232,11 @@ def get_cifar100_data_loaders(download, shuffle=False, batch_size=args.batch_siz
     return train_loader, test_loader
 
 def get_svhn_data_loaders(download, shuffle=False, batch_size=args.batch_size):
-    train_dataset = datasets.SVHN(datapath + "/SVHN", split='train', download=download,
+    train_dataset = customsvhn.SVHN(datapath + "/SVHN", split='train', download=download,
                                   transform=transforms.ToTensor())
     train_loader = DataLoader(train_dataset, batch_size=batch_size,
                             num_workers=0, drop_last=False, shuffle=shuffle)
-    test_dataset = datasets.SVHN(datapath + "/SVHN", split='test', download=download,
+    test_dataset = customsvhn.SVHN(datapath + "/SVHN", split='test', download=download,
                                   transform=transforms.ToTensor())
     indxs = list(range(len(test_dataset) - 1000, len(test_dataset)))
     test_dataset = torch.utils.data.Subset(test_dataset,
